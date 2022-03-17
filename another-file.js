@@ -15,23 +15,25 @@ function getUrl(word){
 async function returnScrapedData(word){
 	let pageUrl = getUrl(word)
 	try {
-		console.log("----------------------------------------------------------------------------")
 		// Fetch the html of the page that's to be scraped
 		const { data } = await axios.get(pageUrl)
-		return (data)
-		
+		return ( data )
 	}catch ( error ){
 		console.log(error)
 		console.log(`An error occurred while attempting to fetch the URL ${pageUrl}`)
 	}
 }
 
-parseScrapedData(returnScrapedData('gaming'))
-
-function parseScrapedData(parsedData){
+async function parseScrapedData(parsedData){
 	// Parse the html that got fetched
-	let parsedMarkeup = cheerio.load(parsedData)
+	let parsedMarkeup = cheerio.load( await (parsedData) )
 
+	let finalResultList = []
+	let wordObject = {
+		categories : [],
+		definition : '',
+		examples : []
+	}
 	// List of the html elements with def class
 	let wordDefinitions = parsedMarkeup(".def")
 	wordDefinitions.each(function (idx, el){
@@ -41,26 +43,31 @@ function parseScrapedData(parsedData){
 		// Word category
 		let wordDefinitionCategory = wordDefinitionParent.prev()
 		if ( wordDefinitionCategory.hasClass('shcut') ){
-			console.log(wordDefinitionCategory.text())
+			wordObject.definition = wordDefinitionCategory.text()
 		}
 
 		// Square bracketed word class
 		let squareBracketedClassElements = wordDefinitionParent.find(".gram-g")
 		squareBracketedClassElements.each((index, element)=>{
-			console.log(parsedMarkeup(element).text())
+			let wordCategory = parsedMarkeup(element).text()
+			wordObject.categories.push(wordCategory)
 		})
 
-		// Definition text value
-		console.log(wordDefinitionElement.text())
+		// Definition textual value
+		let wordDefinitionText = wordDefinitionElement.text()
+		wordObject.definition = wordDefinitionText
 
 		// Word examples
 		let wordxamples = wordDefinitionParent.find(".x-g")
-		wordxamples .each(function(idx, element){
-			console.log(parsedMarkeup(element).text().trim())
+		wordxamples.each(function(idx, element){
+			let wordExample = parsedMarkeup(element).text().trim()
+			wordObject.examples.push(wordExample)
 		})
 		console.log("---------")
+		finalResultList.push(wordObject) 
 	
 	})
-
+	console.log ( finalResultList )
 }
 
+parseScrapedData(returnScrapedData('hack'))
